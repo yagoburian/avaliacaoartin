@@ -10,24 +10,31 @@ require("dotenv/config")
 
 route.post("/login", async (req, res) => {
     const { usuario, senha } = req.body
-    var dados = await Usuario.findOne({ usuario: usuario })
-    if (dados) {
-        if (dados.senha === senha) 
-        {
-            const token = await jwt.sign({
-                userId: dados._id,
-                userNome: dados.nome
-            }, process.env.CHAVE_SEGUR, { expiresIn: 86400 } );
-            return res.send({ token })
+
+    Usuario.findOne({ usuario: usuario }, async (err, data) => {
+        if (data) {
+            if (senha === data.senha) {
+                const token = await jwt.sign({
+                    userId: data._id,
+                    userNome: data.nome
+                }, process.env.CHAVE_SEGUR, { expiresIn: 86400 } );
+                return res.send(
+              {
+                        token,
+                        nome: data.nome
+                    }
+                )
+            } else {
+                return res.send("Senha incorreta.");
+            }
+        } else {
+            return res.send("Usuário não econtrado.");
         }
-        else
-            return res.send("A senha esta incorreta")
-    }
-    return res.send("Usuário não foi encontrado")
+    })
 })
 
 route.get("/lista/produtos", async (req, res) => {
-    var lista = await Produto.find({ ativo: true })
+    const lista = await Produto.find({ ativo: true })
     return res.send(lista)
 })
 
